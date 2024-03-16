@@ -1,0 +1,443 @@
+---
+title: "Midterm Project"
+author: "Jing Yu"
+date: "Mar 5, 2024"
+output:
+  html_document:
+link-citations: yes
+---
+
+```{r setup, message=FALSE, warning=FALSE, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+library(knitr)
+library(data.table)
+library(tidyverse)
+library(kableExtra)
+library(dplyr)
+library(splines)
+library(mgcv)
+library(ggstats)
+library(cowplot)
+```
+
+## Introduction
+
+*"Provide background on your data sets and a clear formulated question or hypothesis."*
+
+The National Health Interview Survey (NHIS) is a vital source of information on the health of the civilian noninstitutionalized population of the United States. It is conducted by the National Center for Health Statistics (NCHS), which is part of the Centers for Disease Control and Prevention (CDC). With its comprehensive coverage of demographic, socioeconomic, and health-related factors, it provides an excellent platform for investigating the correlates of prevalent mental health disorders among adults, such as anxiety and depression. This study aims to **explore the relationships between prevalence of anxiety disorder and depression and various demographic, socioeconomic factors, and other health outcomes using the NHIS data from 2022**. Understanding these correlations can provide valuable insights into the determinants of mental health and inform public health policies and interventions.
+
+
+## Methods
+
+*"Include how and where the data were acquired, how you cleaned and wrangled the data, what tools you used for data exploration."*
+
+### Data Acquisition
+
+The NHIS dataset for the year 2022 was acquired from the **Center for Disease Control and Prevention** website by directly downloading the CSV file, which is usually considered to be an reliable and original source: https://www.cdc.gov/nchs/nhis/2022nhis.htm
+
+Upon downloading the dataset from the website, it was uploaded to a GitHub repository in CSV file format for the convenience of this project.
+
+The dataset has `27651` observations and `637` variables.
+
+```{r checking-file}
+fn1 <- "https://raw.githubusercontent.com/angelaaajing/JSC370-Project/main/adult22.csv"
+
+if (!file.exists("adult22.csv"))
+  download.file(fn1, destfile = "adult22.csv")
+NHIS_df <- data.table::fread("adult22.csv")
+```
+
+
+### Data Wrangling and Cleaning
+
+Unrelated columns in the dataset `NHIS_df` were dropped, keeping only relevant information related to demographic factors, socioeconomic factors, other health outcomes, and mental health disorders.
+
+Demographic factors:
+
+- `REGION`: Household region
+- `SEX_A`: Sex of Sample Adult
+- `AGEP_A`: Age of SA (top coded)
+
+Socioeconomic factors: 
+
+- `MAXEDUCP_A`: Highest level of education of all the adults in the SA's family
+- `RATCAT_A`: Ratio of family income to poverty threshold for SA's family
+
+Other health outcomes: 
+
+- `BMICAT_A`: Categorical Body Mass Index, Public Use
+- `CANEV_A`: Ever been told you had cancer
+- `HYPEV_A`: Ever been told you had hypertension
+- `CHLEV_A`: Ever told you had high cholesterol
+- `ARTHEV_A`: Ever had arthritis
+- `DIBEV_A`: Ever had diabetes
+- `COPDEV_A`: Ever been told you had COPD, emphysema, or chronic bronchitis?
+- `VISIONDF_A`: Difficulty seeing
+- `HEARINGDF_A`: Difficulty hearing
+- `DIFF_A`: Difficulty walking/steps
+- `COMDIFF_A`: Difficulty communicating
+- `COGMEMDFF_A`: Difficulty remembering/concentrating
+
+Mental health disorders:
+
+- `ANXEV_A`: Ever had anxiety disorder
+- `DEPEV_A`: Ever had depression
+
+```{r}
+NHIS_df <- NHIS_df[, c("REGION", "SEX_A", "AGEP_A", "MAXEDUCP_A", "RATCAT_A", 
+                       "BMICAT_A", "CANEV_A", "HYPEV_A", "CHLEV_A", "ARTHEV_A", 
+                       "DIBEV_A", "COPDEV_A", "VISIONDF_A", "HEARINGDF_A",
+                       "DIFF_A", "COMDIFF_A", "COGMEMDFF_A", "ANXEV_A", "DEPEV_A")]
+```
+
+Check the dimensions, headers, footers, variable types and summary statistics of the dataset. The dataset now has `19` variables with `27651` observations. By looking at the headers and footers of the dataset, they seems to be imported correctly. All variables are numerical, referring to some categorical values.
+
+```{r eval=FALSE}
+dim(NHIS_df)
+head(NHIS_df)
+tail(NHIS_df)
+str(NHIS_df)
+summary(NHIS_df)
+```
+
+Since there are too many factors for analysis, I would categorize relevant variables into one, such as chronic conditions and disability status. If an individual had any kinds of chronic conditions/disabilities, return 'Yes'. If an individual didn't have any kinds of chronic conditions/disabilities, return 'No'. Otherwise, replace with NAs. Rename columns for readability and convert numerical categorical values to factors in the `NHIS_df` dataset.
+
+```{r}
+clean_df <- NHIS_df |>
+  mutate(
+    Chronic_cond = case_when(
+      HYPEV_A == 1 | CHLEV_A == 1 | ARTHEV_A == 1 | DIBEV_A == 1 | COPDEV_A == 1 ~ "Yes", 
+      HYPEV_A == 2 & CHLEV_A == 2 & ARTHEV_A == 2 & DIBEV_A == 2 & COPDEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Disability = case_when(
+      VISIONDF_A == 2 | VISIONDF_A == 3 | VISIONDF_A == 4 | 
+        HEARINGDF_A == 2 | HEARINGDF_A == 3 | HEARINGDF_A == 4 |
+        DIFF_A == 2 | DIFF_A == 3 | DIFF_A == 4 |
+        COMDIFF_A == 2 | COMDIFF_A == 3 | COMDIFF_A == 4 |
+        COGMEMDFF_A == 2 | COGMEMDFF_A == 3 | COGMEMDFF_A == 4  ~ "Yes", 
+      VISIONDF_A == 1 & HEARINGDF_A == 1 & DIFF_A == 1 & 
+        COMDIFF_A == 1 & COGMEMDFF_A == 1 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Region = case_when(
+      REGION == 1 ~ "Northeast", 
+      REGION == 2 ~ "Midwest",
+      REGION == 3 ~ "South",
+      REGION == 4 ~ "West",
+      TRUE ~ NA_character_
+      ),
+    Sex = case_when(
+      SEX_A == 1 ~ "Male", 
+      SEX_A == 2 ~ "Female",
+      TRUE ~ NA_character_
+      ),
+    Education = case_when(
+      MAXEDUCP_A <= 04 ~ "High school or lower", 
+      MAXEDUCP_A == 05 ~ "Some college without degree",
+      MAXEDUCP_A == 06 | MAXEDUCP_A == 07 ~ "Associate degree",
+      MAXEDUCP_A == 08 ~ "Bachelor's degree",
+      MAXEDUCP_A == 09 ~ "Master's degree",
+      MAXEDUCP_A == 10 ~ "Professional School / Doctoral degree",
+      TRUE ~ NA_character_
+      ),
+    Income = case_when(
+      RATCAT_A <= 03 ~ "Poverty", 
+      RATCAT_A >= 04 & RATCAT_A <= 09 ~ "Low-Income",
+      RATCAT_A >= 10 & RATCAT_A <= 13 ~ "Middle-Income",
+      RATCAT_A == 14 ~ "High-Income",
+      TRUE ~ NA_character_
+      ),
+    BMI = case_when( 
+      BMICAT_A == 1 ~ "Underweight", 
+      BMICAT_A == 2 ~ "Healthy weight",
+      BMICAT_A == 3 ~ "Overweight",
+      BMICAT_A == 4 ~ "Obese",
+      TRUE ~ NA_character_
+      ),
+    Cancer = case_when(
+      CANEV_A == 1 ~ "Yes", 
+      CANEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Disorder = case_when(
+      ANXEV_A == 1 | DEPEV_A == 1 ~ "Yes", 
+      ANXEV_A == 2 & DEPEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Age = ifelse(AGEP_A >= 97, NA_integer_, AGEP_A)
+  ) |>
+  select(Region, Sex, Age, Education, Income, BMI, Cancer, 
+         Chronic_cond, Disability, Disorder)
+```
+
+After checking the percentage of missing values in each variable, all of them contains only small percent of missing values. Therefore, I removed row with NA values. Now, the dataset has `10` variables with `26819` observations.
+
+```{r, echo = FALSE, fig.align = 'center'}
+# Check percentage of missing values in each variable
+colMeans(is.na(clean_df)) * 100
+
+# Remove rows with NA values
+clean_df <- na.omit(clean_df)
+dim(clean_df)
+```
+
+### Data Exploration
+
+For Exploratory Data Analysis (EDA), I utilized various types of graphs to explore the relationships between different variables. These included:
+
+- Histograms: To visualize the Proportion of Disorder by Age.
+- Bar Plots: To illustrate the proportion of anxiety and depression.
+- Proportional bar plots: To show the prevalence of anxiety and depression in different categories of the categorical variables.
+
+## Preliminary Results 
+
+*"Provide summary statistics in tabular from and publication-quality figures, take a look at the kable function from knitr to write nice tables in Rmarkdown"*
+
+### Summary Statistics
+
+Below is a summary table of key statistics derived from the cleaned NHIS dataset:
+
+```{r, echo = FALSE, fig.align = 'center'}
+# Calculate summary statistics
+summary_stats <- clean_df |>
+  group_by(Region, Sex) |>
+  summarize(
+    Count = n(),
+    Mean_Age = mean(Age, na.rm = TRUE),
+    Median_Age = median(Age, na.rm = TRUE),
+    Min_Age = min(Age, na.rm = TRUE),
+    Max_Age = max(Age, na.rm = TRUE),
+    Prop_Disorder = mean(Disorder == "Yes", na.rm = TRUE)
+  )
+
+# Display summary statistics
+kable(summary_stats, 
+      caption = "Summary Statistics of NHIS Dataset",
+      align = "c") |>
+  kable_styling()
+
+# Summary statistics for demographic factors by anxiety disorder status
+demographic_summary <- clean_df %>%
+  group_by(Disorder) %>%
+  summarise(
+    Mean_Age = mean(Age, na.rm = TRUE),
+    Median_Age = median(Age, na.rm = TRUE),
+    Proportion_Male = mean(Sex == "Male"),
+    Proportion_Female = mean(Sex == "Female"),
+    Proportion_Chronic_Condition = mean(Chronic_cond == "Yes"),
+    Proportion_Disability = mean(Disability == "Yes")
+  )
+
+# Display summary statistics for demographic factors
+kable(demographic_summary, caption = "Summary Statistics of Demographic Factors by Anxiety Disorder Status", align = "c") |>
+  kable_styling()
+
+# Summary statistics for socioeconomic factors by anxiety disorder status
+socioeconomic_summary <- clean_df %>%
+  group_by(Disorder) %>%
+  summarise(
+    Proportion_Poverty = mean(Income == "Poverty"),
+    Proportion_Low_Income = mean(Income == "Low-Income"),
+    Proportion_Middle_Income = mean(Income == "Middle-Income"),
+    Proportion_High_Income = mean(Income == "High-Income")
+  )
+
+# Display summary statistics for socioeconomic factors
+kable(socioeconomic_summary, caption = "Summary Statistics of Socioeconomic Factors by Disorder Status", align = "c") |>
+  kable_styling()
+```
+
+
+### Visualization
+
+Bar plots used to illustrate the proportion of anxiety and depression.
+
+```{r, echo = FALSE, fig.align = 'center'}
+# Bar plot of disorder prevalence
+ggplot(clean_df, aes(x = Disorder)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Disorder",
+       x = "Disorder",
+       y = "Count") +
+  theme_minimal()
+```
+
+Histogram used to visualize the Proportion of Disorder by Age.
+
+```{r, echo = FALSE, fig.align = 'center'}
+# Age distribution histogram
+ggplot(clean_df, aes(x = Age)) +
+  geom_histogram(binwidth = 5, aes(fill = Disorder), color = "black") +
+  labs(title = "Proportion of Disorder by Age",
+       x = "Age",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+Proportional barplots to show the prevalence of anxiety and depression in different categories of the categorical variables.
+
+```{r fig.height=8, fig.width=10, echo = FALSE, fig.align = 'center'}
+# Sex
+Bar_Sex <- ggplot(clean_df, aes(x = Sex, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Disorder by Sex", 
+    x = "Sex", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Region
+Bar_Region <- ggplot(clean_df, aes(x = Region, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Diabetes by Region", 
+    x = "Region", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Education Level
+Bar_Education <- ggplot(clean_df, aes(x = Education, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Diabetes by Education Level", 
+    x = "Education Level", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Income Level
+Bar_Income <- ggplot(clean_df, aes(x = Income, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Diabetes by Income Level", 
+    x = "Income Level", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# BMI
+Bar_BMI <- ggplot(clean_df, aes(x = BMI, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Diabetes by BMI Level", 
+    x = "BMI Level", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Cancer
+Bar_Cancer <- ggplot(clean_df, aes(x = Cancer, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Diabetes by Cancer", 
+    x = "Cancer", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Chronic Condition
+Bar_Chronic <- ggplot(clean_df, aes(x = Chronic_cond, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Diabetes by Chronic Conditions", 
+    x = "Chronic Conditions", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Disability
+Bar_Disability <- ggplot(clean_df, aes(x = Disability, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Diabetes by Disability", 
+    x = "Disability", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+plot_grid(Bar_Sex, Bar_Region, Bar_Education, Bar_Income)
+plot_grid(Bar_BMI, Bar_Cancer, Bar_Chronic, Bar_Disability)
+```
+
+
+### Models
+
+I fitted linear model between disorder and different factors to check whether the variable is statistically significant.
+
+```{r}
+clean_df[, Disorder := ifelse(Disorder == "Yes", 1, 0)] 
+
+# Demographic factors
+demo_lm <- lm(Disorder ~ Region + Sex + Age, clean_df)
+summary(demo_lm)
+
+# Socioeconomic factors
+soc_lm <- lm(Disorder ~ Income + Education, clean_df)
+summary(soc_lm)
+
+# Other health outcomes
+health_lm <- lm(Disorder ~ BMI + Cancer + Chronic_cond + Disability, clean_df)
+summary(health_lm)
+```
+
+## Summary
+
+*"What you found so far from your data in terms of the formulated question."*
+
+From the summary of the fitted linear models, we can analyze the results in the following aspects:
+
+Model for Demographic factor:
+
+- Adjusted R-squared: 0.02421
+- Significance of Coefficients: Most coefficients are highly significant (p < 0.05).
+- Residual Standard Error: 0.4243
+
+
+Model for Socioeconomic factor:
+
+- Adjusted R-squared: 0.01544
+- Significance of Coefficients: Some coefficients are not significant (e.g., EducationMaster's degree, EducationProfessional School / Doctoral degree).
+- Residual Standard Error: 0.4262
+
+Model for other health outcomes:
+
+- Adjusted R-squared: 0.05417
+- Significance of Coefficients: All coefficients are significant (p < 0.05).
+- Residual Standard Error: 0.4177
+
+Based on these assessments, we can draw the following conclusions:
+
+- Model for other health outcomes has the highest Adjusted R-squared value, indicating that it explains the largest proportion of the variance in the outcome variable (Disorder).
+- All coefficients in Model for other health outcomes: are significant, suggesting that all predictor variables (BMI, Cancer, Chronic_cond, Disability) contribute significantly to predicting the prevalence of the disorder.
+- The residual standard error of Model for other health outcomes: is the lowest among the three models, indicating better model fit.
+
+Therefore, Model for other health outcomes: (Disorder ~ BMI + Cancer + Chronic_cond + Disability) appears to be the best model among the three for predicting the prevalence of the disorder based on the provided information.
+
+Inclusion, other health outcomes seems to affect the prevalance of disorder most.
