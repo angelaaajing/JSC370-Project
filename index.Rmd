@@ -1,0 +1,214 @@
+---
+title: "JSC370 Final Project"
+author: "Jing Yu"
+output: 
+    html_document:
+        toc: TRUE   # Table content at front of the page
+        toc_float: TRUE   # Floating table content on the left
+---
+
+---
+title: "Explore the Relationship between Prevalence of Mental Disorder and Various Factors (Demographic, Socioeconomic, and Other Health Outcomes)"
+subtitle: "JSC370 Final Project"
+author: "Jing Yu"
+date: "April 2024"
+output:
+  html_document: 
+    fig_caption: true
+    fig_height: 6
+    fig_width: 10
+---
+```{r setup, message=FALSE, warning=FALSE, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, eval = T, include  = T, echo=F) 
+library(knitr)
+library(data.table)
+library(tidyverse)
+library(kableExtra)
+library(dplyr)
+library(splines)
+library(mgcv)
+library(ggstats)
+library(cowplot)
+library(plotly)
+```
+
+## Introduction
+
+The National Health Interview Survey (NHIS) is a vital source of information on the health of the civilian noninstitutionalized population of the United States. It is conducted by the National Center for Health Statistics (NCHS), which is part of the Centers for Disease Control and Prevention (CDC). With its comprehensive coverage of demographic, socioeconomic, and health-related factors, it provides an excellent platform for investigating the correlates of prevalent mental health disorders among adults, such as anxiety and depression. This study aims to **Explore the Relationship between Prevalence of Mental Disorder and Various Factors (Demographic, Socioeconomic, and Other Health Outcomes)**. Understanding these correlations can provide valuable insights into the determinants of mental health and inform public health policies and interventions.
+
+
+## Methods
+
+### Data Acquisition
+
+The NHIS dataset for the year 2022 was acquired from the **Center for Disease Control and Prevention** website by directly downloading the CSV file, which is usually considered to be an reliable and original source: https://www.cdc.gov/nchs/nhis/2022nhis.htm
+
+Upon downloading the dataset from the website, it was uploaded to a GitHub repository in CSV file format for the convenience of this project.
+
+
+```{r checking-file, echo=FALSE}
+fn1 <- "https://raw.githubusercontent.com/angelaaajing/JSC370-Project/main/adult22.csv"
+
+if (!file.exists("adult22.csv"))
+  download.file(fn1, destfile = "adult22.csv")
+NHIS_df <- data.table::fread("adult22.csv")
+```
+
+
+### Data Wrangling and Cleaning
+
+The original dataset has `27651` observations and `637` variables. Irrelevant columns were removed from the dataset, retaining only pertinent information related to demographic factors, socioeconomic factors, health outcomes, and mental health disorders.
+
+Demographic factors:
+
+- `REGION`: Household region
+- `SEX_A`: Sex of Sample Adult
+- `AGEP_A`: Age of SA (top coded)
+
+Socioeconomic factors: 
+
+- `MAXEDUCP_A`: Highest level of education of all the adults in the SA's family
+- `RATCAT_A`: Ratio of family income to poverty threshold for SA's family
+
+Other health outcomes: 
+
+- `BMICAT_A`: Categorical Body Mass Index, Public Use
+- `CANEV_A`: Ever been told you had cancer
+- `HYPEV_A`: Ever been told you had hypertension
+- `CHLEV_A`: Ever told you had high cholesterol
+- `ARTHEV_A`: Ever had arthritis
+- `DIBEV_A`: Ever had diabetes
+- `COPDEV_A`: Ever been told you had COPD, emphysema, or chronic bronchitis?
+- `VISIONDF_A`: Difficulty seeing
+- `HEARINGDF_A`: Difficulty hearing
+- `DIFF_A`: Difficulty walking/steps
+- `COMDIFF_A`: Difficulty communicating
+- `COGMEMDFF_A`: Difficulty remembering/concentrating
+
+Mental health disorders:
+
+- `ANXEV_A`: Ever had anxiety disorder
+- `DEPEV_A`: Ever had depression
+
+```{r, echo=FALSE}
+NHIS_df <- NHIS_df[, c("REGION", "SEX_A", "AGEP_A", "MAXEDUCP_A", "RATCAT_A", 
+                       "BMICAT_A", "CANEV_A", "HYPEV_A", "CHLEV_A", "ARTHEV_A", 
+                       "DIBEV_A", "COPDEV_A", "VISIONDF_A", "HEARINGDF_A",
+                       "DIFF_A", "COMDIFF_A", "COGMEMDFF_A", "ANXEV_A", "DEPEV_A")]
+```
+
+The dataset dimensions, headers, footers, variable types, and summary statistics were checked. All variables were found to be numerical, referencing categorical values.
+
+```{r eval=FALSE, echo=FALSE}
+dim(NHIS_df)
+head(NHIS_df)
+tail(NHIS_df)
+str(NHIS_df)
+summary(NHIS_df)
+```
+
+To facilitate analysis, relevant variables were categorized, such as chronic conditions and disability status. Individuals with any chronic conditions or disabilities were labeled 'Yes', while those without were labeled 'No' or replaced with NAs. Column names were renamed for clarity, and numerical categorical values were converted to factors in the `NHIS_df` dataset.
+
+```{r, echo=FALSE}
+clean_df <- NHIS_df |>
+  mutate(
+    Chronic_cond = case_when(
+      HYPEV_A == 1 | CHLEV_A == 1 | ARTHEV_A == 1 | DIBEV_A == 1 | COPDEV_A == 1 ~ "Yes", 
+      HYPEV_A == 2 & CHLEV_A == 2 & ARTHEV_A == 2 & DIBEV_A == 2 & COPDEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Disability = case_when(
+      VISIONDF_A == 2 | VISIONDF_A == 3 | VISIONDF_A == 4 | 
+        HEARINGDF_A == 2 | HEARINGDF_A == 3 | HEARINGDF_A == 4 |
+        DIFF_A == 2 | DIFF_A == 3 | DIFF_A == 4 |
+        COMDIFF_A == 2 | COMDIFF_A == 3 | COMDIFF_A == 4 |
+        COGMEMDFF_A == 2 | COGMEMDFF_A == 3 | COGMEMDFF_A == 4  ~ "Yes", 
+      VISIONDF_A == 1 & HEARINGDF_A == 1 & DIFF_A == 1 & 
+        COMDIFF_A == 1 & COGMEMDFF_A == 1 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Region = case_when(
+      REGION == 1 ~ "Northeast", 
+      REGION == 2 ~ "Midwest",
+      REGION == 3 ~ "South",
+      REGION == 4 ~ "West",
+      TRUE ~ NA_character_
+      ),
+    Sex = case_when(
+      SEX_A == 1 ~ "Male", 
+      SEX_A == 2 ~ "Female",
+      TRUE ~ NA_character_
+      ),
+    Education = case_when(
+      MAXEDUCP_A <= 04 ~ "High school or lower", 
+      MAXEDUCP_A == 05 ~ "Some college without degree",
+      MAXEDUCP_A == 06 | MAXEDUCP_A == 07 ~ "Associate degree",
+      MAXEDUCP_A == 08 ~ "Bachelor's degree",
+      MAXEDUCP_A == 09 ~ "Master's degree",
+      MAXEDUCP_A == 10 ~ "Professional School / Doctoral degree",
+      TRUE ~ NA_character_
+      ),
+    Income = case_when(
+      RATCAT_A <= 03 ~ "Poverty", 
+      RATCAT_A >= 04 & RATCAT_A <= 09 ~ "Low-Income",
+      RATCAT_A >= 10 & RATCAT_A <= 13 ~ "Middle-Income",
+      RATCAT_A == 14 ~ "High-Income",
+      TRUE ~ NA_character_
+      ),
+    BMI = case_when( 
+      BMICAT_A == 1 ~ "Underweight", 
+      BMICAT_A == 2 ~ "Healthy weight",
+      BMICAT_A == 3 ~ "Overweight",
+      BMICAT_A == 4 ~ "Obese",
+      TRUE ~ NA_character_
+      ),
+    Cancer = case_when(
+      CANEV_A == 1 ~ "Yes", 
+      CANEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Disorder = case_when(
+      ANXEV_A == 1 | DEPEV_A == 1 ~ "Yes", 
+      ANXEV_A == 2 & DEPEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Age = ifelse(AGEP_A >= 97, NA_integer_, AGEP_A)
+  ) |>
+  select(Region, Sex, Age, Education, Income, BMI, Cancer, 
+         Chronic_cond, Disability, Disorder)
+```
+
+Missing values were checked and found to be minimal in each variable. Rows with missing data were removed, resulting in a cleaned dataset with `10` variables and `26819` observations.
+
+```{r, eval=FALSE, echo = FALSE, fig.align = 'center'}
+# Check percentage of missing values in each variable
+colMeans(is.na(clean_df)) * 100
+```
+
+```{r, echo = FALSE, fig.align = 'center'}
+# Remove rows with NA values
+clean_df <- na.omit(clean_df)
+```
+
+### Data Exploration
+
+Summary statistics were computed for numerical variable, and proportional bar plots were generated to visualize the prevalence of mental disorder across different categories of categorical variables. Scatterplot, facet bar plots, and maps were created to explore the relationships between mental disorder prevalence and various demographic, socioeconomic, and health outcome factors.
+
+### Description of Modeling
+
+Logistic regression analysis was utilized to investigate the association between mental disorder prevalence and various factors, including demographic, socioeconomic, and health outcome variables. The logistic regression model was applied to the dataset to ascertain the statistical significance of each predictor in predicting mental disorder prevalence. Through this analysis, the model assessed the significance of different predictors and evaluated the overall fit of the model.
+
+## Conclusions and Summary
+
+This study aimed to explore the relationships between the prevalence of anxiety disorder and depression and various demographic, socioeconomic factors, and other health outcomes using the NHIS dataset from 2022. Through comprehensive data exploration and modeling techniques, several key findings emerged.
+
+- **Demographic Factors**: Female individuals and those in the Midwest region exhibited higher prevalence rates of mental disorders compared to their counterparts. Additionally, younger age groups were more susceptible to mental disorders.
+  
+- **Socioeconomic Factors**: Lower-income individuals, particularly those living below the poverty threshold, showed higher prevalence rates of mental disorders. While education level did not exhibit a significant relationship with mental disorder prevalence, higher-income levels were associated with lower prevalence rates.
+  
+- **Health Outcomes**: Individuals with chronic conditions, disabilities, or a history of cancer were more likely to experience mental disorders. Notably, underweight and obese individuals exhibited higher prevalence rates, while overweight individuals showed lower rates.
+
+The logistic regression model confirmed the statistical significance of these factors in predicting mental disorder prevalence. However, the model's relatively low $R^2$ value suggests that additional factors beyond those included in the model may contribute to mental disorder prevalence. Therefore, while the model may not be suitable for predictive purposes, the identified factors can inform public health interventions and policies aimed at addressing mental health disparities.
+
+In summary, the findings of this study have significant implications for public health policies and interventions aimed at addressing mental health disparities. Targeted efforts are needed to address socioeconomic inequalities, provide accessible mental health services, and promote overall well-being across diverse demographic groups and geographic regions. By understanding the determinants of mental health disorders, policymakers and healthcare providers can implement effective strategies to mitigate risks and improve mental health outcomes for all individuals.
+

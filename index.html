@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Jing Yu" />
+
+
+<title>Explore the Relationship between Prevalence of Mental Disorder and Various Factors (Demographic, Socioeconomic, and Other Health Outcomes)</title>
+
+<script src="site_libs/header-attrs-2.26/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-6.4.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+<link rel="stylesheet" href="styles.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">JSC370 Final Project</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Description</a>
+</li>
+<li>
+  <a href="visualization.html">Interactive Visualizations</a>
+</li>
+<li>
+  <a href="report.html">Report</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/JSC370/JSC370-2024/">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://jsc370.github.io/JSC370-2024/">JSC370 Home</a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Explore the Relationship between Prevalence
+of Mental Disorder and Various Factors (Demographic, Socioeconomic, and
+Other Health Outcomes)</h1>
+<h3 class="subtitle">JSC370 Final Project</h3>
+<h4 class="author">Jing Yu</h4>
+<h4 class="date">April 2024</h4>
+
+</div>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The National Health Interview Survey (NHIS) is a vital source of
+information on the health of the civilian noninstitutionalized
+population of the United States. It is conducted by the National Center
+for Health Statistics (NCHS), which is part of the Centers for Disease
+Control and Prevention (CDC). With its comprehensive coverage of
+demographic, socioeconomic, and health-related factors, it provides an
+excellent platform for investigating the correlates of prevalent mental
+health disorders among adults, such as anxiety and depression. This
+study aims to <strong>Explore the Relationship between Prevalence of
+Mental Disorder and Various Factors (Demographic, Socioeconomic, and
+Other Health Outcomes)</strong>. Understanding these correlations can
+provide valuable insights into the determinants of mental health and
+inform public health policies and interventions.</p>
+</div>
+<div id="methods" class="section level2">
+<h2>Methods</h2>
+<div id="data-acquisition" class="section level3">
+<h3>Data Acquisition</h3>
+<p>The NHIS dataset for the year 2022 was acquired from the
+<strong>Center for Disease Control and Prevention</strong> website by
+directly downloading the CSV file, which is usually considered to be an
+reliable and original source: <a
+href="https://www.cdc.gov/nchs/nhis/2022nhis.htm"
+class="uri">https://www.cdc.gov/nchs/nhis/2022nhis.htm</a></p>
+<p>Upon downloading the dataset from the website, it was uploaded to a
+GitHub repository in CSV file format for the convenience of this
+project.</p>
+</div>
+<div id="data-wrangling-and-cleaning" class="section level3">
+<h3>Data Wrangling and Cleaning</h3>
+<p>The original dataset has <code>27651</code> observations and
+<code>637</code> variables. Irrelevant columns were removed from the
+dataset, retaining only pertinent information related to demographic
+factors, socioeconomic factors, health outcomes, and mental health
+disorders.</p>
+<p>Demographic factors:</p>
+<ul>
+<li><code>REGION</code>: Household region</li>
+<li><code>SEX_A</code>: Sex of Sample Adult</li>
+<li><code>AGEP_A</code>: Age of SA (top coded)</li>
+</ul>
+<p>Socioeconomic factors:</p>
+<ul>
+<li><code>MAXEDUCP_A</code>: Highest level of education of all the
+adults in the SA’s family</li>
+<li><code>RATCAT_A</code>: Ratio of family income to poverty threshold
+for SA’s family</li>
+</ul>
+<p>Other health outcomes:</p>
+<ul>
+<li><code>BMICAT_A</code>: Categorical Body Mass Index, Public Use</li>
+<li><code>CANEV_A</code>: Ever been told you had cancer</li>
+<li><code>HYPEV_A</code>: Ever been told you had hypertension</li>
+<li><code>CHLEV_A</code>: Ever told you had high cholesterol</li>
+<li><code>ARTHEV_A</code>: Ever had arthritis</li>
+<li><code>DIBEV_A</code>: Ever had diabetes</li>
+<li><code>COPDEV_A</code>: Ever been told you had COPD, emphysema, or
+chronic bronchitis?</li>
+<li><code>VISIONDF_A</code>: Difficulty seeing</li>
+<li><code>HEARINGDF_A</code>: Difficulty hearing</li>
+<li><code>DIFF_A</code>: Difficulty walking/steps</li>
+<li><code>COMDIFF_A</code>: Difficulty communicating</li>
+<li><code>COGMEMDFF_A</code>: Difficulty remembering/concentrating</li>
+</ul>
+<p>Mental health disorders:</p>
+<ul>
+<li><code>ANXEV_A</code>: Ever had anxiety disorder</li>
+<li><code>DEPEV_A</code>: Ever had depression</li>
+</ul>
+<p>The dataset dimensions, headers, footers, variable types, and summary
+statistics were checked. All variables were found to be numerical,
+referencing categorical values.</p>
+<p>To facilitate analysis, relevant variables were categorized, such as
+chronic conditions and disability status. Individuals with any chronic
+conditions or disabilities were labeled ‘Yes’, while those without were
+labeled ‘No’ or replaced with NAs. Column names were renamed for
+clarity, and numerical categorical values were converted to factors in
+the <code>NHIS_df</code> dataset.</p>
+<p>Missing values were checked and found to be minimal in each variable.
+Rows with missing data were removed, resulting in a cleaned dataset with
+<code>10</code> variables and <code>26819</code> observations.</p>
+</div>
+<div id="data-exploration" class="section level3">
+<h3>Data Exploration</h3>
+<p>Summary statistics were computed for numerical variable, and
+proportional bar plots were generated to visualize the prevalence of
+mental disorder across different categories of categorical variables.
+Scatterplot, facet bar plots, and maps were created to explore the
+relationships between mental disorder prevalence and various
+demographic, socioeconomic, and health outcome factors.</p>
+</div>
+<div id="description-of-modeling" class="section level3">
+<h3>Description of Modeling</h3>
+<p>Logistic regression analysis was utilized to investigate the
+association between mental disorder prevalence and various factors,
+including demographic, socioeconomic, and health outcome variables. The
+logistic regression model was applied to the dataset to ascertain the
+statistical significance of each predictor in predicting mental disorder
+prevalence. Through this analysis, the model assessed the significance
+of different predictors and evaluated the overall fit of the model.</p>
+</div>
+</div>
+<div id="conclusions-and-summary" class="section level2">
+<h2>Conclusions and Summary</h2>
+<p>This study aimed to explore the relationships between the prevalence
+of anxiety disorder and depression and various demographic,
+socioeconomic factors, and other health outcomes using the NHIS dataset
+from 2022. Through comprehensive data exploration and modeling
+techniques, several key findings emerged.</p>
+<ul>
+<li><p><strong>Demographic Factors</strong>: Female individuals and
+those in the Midwest region exhibited higher prevalence rates of mental
+disorders compared to their counterparts. Additionally, younger age
+groups were more susceptible to mental disorders.</p></li>
+<li><p><strong>Socioeconomic Factors</strong>: Lower-income individuals,
+particularly those living below the poverty threshold, showed higher
+prevalence rates of mental disorders. While education level did not
+exhibit a significant relationship with mental disorder prevalence,
+higher-income levels were associated with lower prevalence
+rates.</p></li>
+<li><p><strong>Health Outcomes</strong>: Individuals with chronic
+conditions, disabilities, or a history of cancer were more likely to
+experience mental disorders. Notably, underweight and obese individuals
+exhibited higher prevalence rates, while overweight individuals showed
+lower rates.</p></li>
+</ul>
+<p>The logistic regression model confirmed the statistical significance
+of these factors in predicting mental disorder prevalence. However, the
+model’s relatively low <span class="math inline">\(R^2\)</span> value
+suggests that additional factors beyond those included in the model may
+contribute to mental disorder prevalence. Therefore, while the model may
+not be suitable for predictive purposes, the identified factors can
+inform public health interventions and policies aimed at addressing
+mental health disparities.</p>
+<p>In summary, the findings of this study have significant implications
+for public health policies and interventions aimed at addressing mental
+health disparities. Targeted efforts are needed to address socioeconomic
+inequalities, provide accessible mental health services, and promote
+overall well-being across diverse demographic groups and geographic
+regions. By understanding the determinants of mental health disorders,
+policymakers and healthcare providers can implement effective strategies
+to mitigate risks and improve mental health outcomes for all
+individuals.</p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,588 @@
+---
+title: "Explore the Relationship between Prevalence of Mental Disorder and Various Factors (Demographic, Socioeconomic, and Other Health Outcomes)"
+subtitle: "JSC370 Final Project"
+author: "Jing Yu"
+date: "April 2024"
+output:
+  html_document: 
+    fig_caption: true
+    fig_height: 6
+    fig_width: 10
+---
+```{r setup, message=FALSE, warning=FALSE, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, eval = T, include  = T, echo=F) 
+library(knitr)
+library(data.table)
+library(tidyverse)
+library(kableExtra)
+library(dplyr)
+library(splines)
+library(mgcv)
+library(ggstats)
+library(cowplot)
+library(plotly)
+```
+
+## Introduction
+
+The National Health Interview Survey (NHIS) is a vital source of information on the health of the civilian noninstitutionalized population of the United States. It is conducted by the National Center for Health Statistics (NCHS), which is part of the Centers for Disease Control and Prevention (CDC). With its comprehensive coverage of demographic, socioeconomic, and health-related factors, it provides an excellent platform for investigating the correlates of prevalent mental health disorders among adults, such as anxiety and depression. This study aims to **Explore the Relationship between Prevalence of Mental Disorder and Various Factors (Demographic, Socioeconomic, and Other Health Outcomes)**. Understanding these correlations can provide valuable insights into the determinants of mental health and inform public health policies and interventions.
+
+
+## Methods
+
+### Data Acquisition
+
+The NHIS dataset for the year 2022 was acquired from the **Center for Disease Control and Prevention** website by directly downloading the CSV file, which is usually considered to be an reliable and original source: https://www.cdc.gov/nchs/nhis/2022nhis.htm
+
+Upon downloading the dataset from the website, it was uploaded to a GitHub repository in CSV file format for the convenience of this project.
+
+
+```{r checking-file, echo=FALSE}
+fn1 <- "https://raw.githubusercontent.com/angelaaajing/JSC370-Project/main/adult22.csv"
+
+if (!file.exists("adult22.csv"))
+  download.file(fn1, destfile = "adult22.csv")
+NHIS_df <- data.table::fread("adult22.csv")
+```
+
+
+### Data Wrangling and Cleaning
+
+The original dataset has `27651` observations and `637` variables. Irrelevant columns were removed from the dataset, retaining only pertinent information related to demographic factors, socioeconomic factors, health outcomes, and mental health disorders.
+
+Demographic factors:
+
+- `REGION`: Household region
+- `SEX_A`: Sex of Sample Adult
+- `AGEP_A`: Age of SA (top coded)
+
+Socioeconomic factors: 
+
+- `MAXEDUCP_A`: Highest level of education of all the adults in the SA's family
+- `RATCAT_A`: Ratio of family income to poverty threshold for SA's family
+
+Other health outcomes: 
+
+- `BMICAT_A`: Categorical Body Mass Index, Public Use
+- `CANEV_A`: Ever been told you had cancer
+- `HYPEV_A`: Ever been told you had hypertension
+- `CHLEV_A`: Ever told you had high cholesterol
+- `ARTHEV_A`: Ever had arthritis
+- `DIBEV_A`: Ever had diabetes
+- `COPDEV_A`: Ever been told you had COPD, emphysema, or chronic bronchitis?
+- `VISIONDF_A`: Difficulty seeing
+- `HEARINGDF_A`: Difficulty hearing
+- `DIFF_A`: Difficulty walking/steps
+- `COMDIFF_A`: Difficulty communicating
+- `COGMEMDFF_A`: Difficulty remembering/concentrating
+
+Mental health disorders:
+
+- `ANXEV_A`: Ever had anxiety disorder
+- `DEPEV_A`: Ever had depression
+
+```{r, echo=FALSE}
+NHIS_df <- NHIS_df[, c("REGION", "SEX_A", "AGEP_A", "MAXEDUCP_A", "RATCAT_A", 
+                       "BMICAT_A", "CANEV_A", "HYPEV_A", "CHLEV_A", "ARTHEV_A", 
+                       "DIBEV_A", "COPDEV_A", "VISIONDF_A", "HEARINGDF_A",
+                       "DIFF_A", "COMDIFF_A", "COGMEMDFF_A", "ANXEV_A", "DEPEV_A")]
+```
+
+The dataset dimensions, headers, footers, variable types, and summary statistics were checked. All variables were found to be numerical, referencing categorical values.
+
+```{r eval=FALSE, echo=FALSE}
+dim(NHIS_df)
+head(NHIS_df)
+tail(NHIS_df)
+str(NHIS_df)
+summary(NHIS_df)
+```
+
+To facilitate analysis, relevant variables were categorized, such as chronic conditions and disability status. Individuals with any chronic conditions or disabilities were labeled 'Yes', while those without were labeled 'No' or replaced with NAs. Column names were renamed for clarity, and numerical categorical values were converted to factors in the `NHIS_df` dataset.
+
+```{r, echo=FALSE}
+clean_df <- NHIS_df |>
+  mutate(
+    Chronic_cond = case_when(
+      HYPEV_A == 1 | CHLEV_A == 1 | ARTHEV_A == 1 | DIBEV_A == 1 | COPDEV_A == 1 ~ "Yes", 
+      HYPEV_A == 2 & CHLEV_A == 2 & ARTHEV_A == 2 & DIBEV_A == 2 & COPDEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Disability = case_when(
+      VISIONDF_A == 2 | VISIONDF_A == 3 | VISIONDF_A == 4 | 
+        HEARINGDF_A == 2 | HEARINGDF_A == 3 | HEARINGDF_A == 4 |
+        DIFF_A == 2 | DIFF_A == 3 | DIFF_A == 4 |
+        COMDIFF_A == 2 | COMDIFF_A == 3 | COMDIFF_A == 4 |
+        COGMEMDFF_A == 2 | COGMEMDFF_A == 3 | COGMEMDFF_A == 4  ~ "Yes", 
+      VISIONDF_A == 1 & HEARINGDF_A == 1 & DIFF_A == 1 & 
+        COMDIFF_A == 1 & COGMEMDFF_A == 1 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Region = case_when(
+      REGION == 1 ~ "Northeast", 
+      REGION == 2 ~ "Midwest",
+      REGION == 3 ~ "South",
+      REGION == 4 ~ "West",
+      TRUE ~ NA_character_
+      ),
+    Sex = case_when(
+      SEX_A == 1 ~ "Male", 
+      SEX_A == 2 ~ "Female",
+      TRUE ~ NA_character_
+      ),
+    Education = case_when(
+      MAXEDUCP_A <= 04 ~ "High school or lower", 
+      MAXEDUCP_A == 05 ~ "Some college without degree",
+      MAXEDUCP_A == 06 | MAXEDUCP_A == 07 ~ "Associate degree",
+      MAXEDUCP_A == 08 ~ "Bachelor's degree",
+      MAXEDUCP_A == 09 ~ "Master's degree",
+      MAXEDUCP_A == 10 ~ "Professional School / Doctoral degree",
+      TRUE ~ NA_character_
+      ),
+    Income = case_when(
+      RATCAT_A <= 03 ~ "Poverty", 
+      RATCAT_A >= 04 & RATCAT_A <= 09 ~ "Low-Income",
+      RATCAT_A >= 10 & RATCAT_A <= 13 ~ "Middle-Income",
+      RATCAT_A == 14 ~ "High-Income",
+      TRUE ~ NA_character_
+      ),
+    BMI = case_when( 
+      BMICAT_A == 1 ~ "Underweight", 
+      BMICAT_A == 2 ~ "Healthy weight",
+      BMICAT_A == 3 ~ "Overweight",
+      BMICAT_A == 4 ~ "Obese",
+      TRUE ~ NA_character_
+      ),
+    Cancer = case_when(
+      CANEV_A == 1 ~ "Yes", 
+      CANEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Disorder = case_when(
+      ANXEV_A == 1 | DEPEV_A == 1 ~ "Yes", 
+      ANXEV_A == 2 & DEPEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Age = ifelse(AGEP_A >= 97, NA_integer_, AGEP_A)
+  ) |>
+  select(Region, Sex, Age, Education, Income, BMI, Cancer, 
+         Chronic_cond, Disability, Disorder)
+```
+
+Missing values were checked and found to be minimal in each variable. Rows with missing data were removed, resulting in a cleaned dataset with `10` variables and `26819` observations.
+
+```{r, eval=FALSE, echo = FALSE, fig.align = 'center'}
+# Check percentage of missing values in each variable
+colMeans(is.na(clean_df)) * 100
+```
+
+```{r, echo = FALSE, fig.align = 'center'}
+# Remove rows with NA values
+clean_df <- na.omit(clean_df)
+```
+
+### Data Exploration
+
+Summary statistics were computed for numerical variable, and proportional bar plots were generated to visualize the prevalence of mental disorder across different categories of categorical variables. Scatterplot, facet bar plots, and maps were created to explore the relationships between mental disorder prevalence and various demographic, socioeconomic, and health outcome factors.
+
+### Description of Modeling
+
+Logistic regression analysis was utilized to investigate the association between mental disorder prevalence and various factors, including demographic, socioeconomic, and health outcome variables. The logistic regression model was applied to the dataset to ascertain the statistical significance of each predictor in predicting mental disorder prevalence. Through this analysis, the model assessed the significance of different predictors and evaluated the overall fit of the model.
+
+## Results 
+
+### Summary Statistics
+
+Upon commencing data analysis, the initial step involved scrutinizing the dataset for anomalies or potential errors.
+
+Firstly, a comprehensive summary of the numerical variable, such as Age, was generated across different demographic groups. The analysis revealed consistent distributions of age within each group, suggesting symmetry across the dataset. No significant deviations were observed, instilling confidence in the cleanliness and accuracy of the data.
+
+Subsequently, a detailed examination of various categorical variables was conducted to assess their percentage distributions relative to the total. This exploration unearthed noteworthy observations regarding certain variables with disproportionately fewer observations in specific categories. The following variables and their corresponding categories were identified as requiring attention:
+
+1. **Income**: Notably, the category denoting individuals living below the poverty threshold stood out due to its notably lower representation compared to other income categories.
+   
+2. **Education**: Categories such as "Professional School / Doctoral degree" exhibited a disproportionately smaller number of observations, warranting further consideration in subsequent analyses.
+   
+3. **BMI**: Individuals categorized as "Underweight" similarly displayed a lower representation within the dataset compared to other BMI categories.
+   
+4. **Cancer**: The presence of the category "Yes" indicating a history of cancer garnered attention due to its relatively infrequent occurrence.
+
+While other categorical variables appeared to exhibit more even distributions across categories, the identified variables with fewer observations necessitate careful consideration to prevent underrepresentation bias during subsequent analyses.
+
+```{r echo=FALSE, fig.height=8, fig.width=10}
+# Summary statistics for demographic factors
+summary_stats <- clean_df |>
+  group_by(Region, Sex) |>
+  summarize(
+    Percentage = n() / nrow(clean_df) * 100,
+    Min_Age = min(Age, na.rm = TRUE),
+    `1stQu_Age` = quantile(Age, 0.25),
+    Mean_Age = mean(Age, na.rm = TRUE),
+    Median_Age = median(Age, na.rm = TRUE),
+    `3stQu_Age` = quantile(Age, 0.75),
+    Max_Age = max(Age, na.rm = TRUE)
+  )
+
+# Display summary statistics for demographic factors
+kable(summary_stats, 
+      title = "Summary Statistics",
+      caption = "Summary for Demographic Factors",
+      align = "c") |>
+  kable_styling()
+
+# Summary statistics for socioeconomic factors
+summary_Income <- clean_df |>
+  group_by(Income) |>
+  summarize(
+    Precentage = n() / nrow(clean_df) * 100
+  )
+
+summary_Education <- clean_df |>
+  group_by(Education) |>
+  summarize(
+    Precentage = n() / nrow(clean_df) * 100
+  )
+
+# Display summary statistics for socioeconomic factors
+kable(
+  list(summary_Income, summary_Education),
+  title = "Summary for Income and Education",
+  caption = "Summary for Socioeconomic Factors",
+  booktabs = TRUE, valign = 't'
+)
+
+# Summary statistics for other health outcomes
+summary_BMI <- clean_df |>
+  group_by(BMI) |>
+  summarize(
+    Precentage = n() / nrow(clean_df) * 100
+  )
+
+summary_Cancer <- clean_df |>
+  group_by(Cancer) |>
+  summarize(
+    Precentage = n() / nrow(clean_df) * 100
+  )
+
+summary_Chronic_cond <- clean_df |>
+  group_by(Chronic_cond) |>
+  summarize(
+    Precentage = n() / nrow(clean_df) * 100
+  )
+
+summary_Disability <- clean_df |>
+  group_by(Disability) |>
+  summarize(
+    Precentage = n() / nrow(clean_df) * 100
+  )
+
+# Display summary statistics for other health outcomes
+kable(
+  list(summary_BMI, summary_Cancer, summary_Chronic_cond, summary_Disability),
+  title = "Summary for Other Health Outcomes",
+  caption = "Summary for Other Health Outcomes",
+  booktabs = TRUE, valign = 't'
+)
+```
+
+### Prevalence Analysis
+
+Proportional bar plots were created to visualize the prevalence of mental disorders across different categories of categorical variables. Significant differences were observed between categories for variables including Sex, Income, BMI, Disability, and Chronic conditions.
+
+```{r echo=FALSE, fig.height=8, fig.width=10}
+# Sex
+Bar_Sex <- ggplot(clean_df, aes(x = Sex, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Disorder by Sex", 
+    x = "Sex", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Region
+Bar_Region <- ggplot(clean_df, aes(x = Region, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Disorder by Region", 
+    x = "Region", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Education Level
+Bar_Education <- ggplot(clean_df, aes(x = Education, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Disorder by Education Level", 
+    x = "Education Level", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Income Level
+Bar_Income <- ggplot(clean_df, aes(x = Income, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Disorder by Income Level", 
+    x = "Income Level", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# BMI
+Bar_BMI <- ggplot(clean_df, aes(x = BMI, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Disorder by BMI Level", 
+    x = "BMI Level", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Cancer
+Bar_Cancer <- ggplot(clean_df, aes(x = Cancer, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Disorder by Cancer", 
+    x = "Cancer", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Chronic Condition
+Bar_Chronic <- ggplot(clean_df, aes(x = Chronic_cond, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Disorder by Chronic Conditions", 
+    x = "Chronic Conditions", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+# Disability
+Bar_Disability <- ggplot(clean_df, aes(x = Disability, fill = Disorder)) + 
+  geom_bar(position = "fill", alpha = 0.75) + 
+  labs(
+    title = "Proportion of Disorder by Disability", 
+    x = "Disability", 
+    y = "Proportion",
+    fill = "Disorder"
+    ) +
+  geom_text(stat = "prop", position = position_fill(.5)) +
+  theme_bw() +
+  coord_flip()
+
+plot_grid(Bar_Sex, Bar_Region, Bar_Education, Bar_Income, Bar_BMI, Bar_Cancer, Bar_Chronic, Bar_Disability, ncol = 2)
+```
+
+### Relationship Analysis
+
+A scatterplot was utilized to explore the relationship between age and mental disorder prevalence. The analysis revealed a decreasing trend in mental disorder prevalence with increasing age, indicating that younger individuals are more prone to mental disorders.
+
+```{r echo=FALSE, fig.height=3, fig.width=5}
+# relationship between age and mental disorder prevalence
+p_age <- clean_df |>
+  group_by(Age) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  ) |>
+  ggplot(aes(x = Age, y = Prevalence)) +
+  geom_point() +
+  labs(title = "Mental Disorder Prevalence by Age",
+       x = "Age",
+       y = "Prevalence") +
+  theme_minimal() +
+  stat_smooth(method = "lm", formula = y ~ x, se = FALSE, na.rm = TRUE)
+
+ggplotly(p_age)
+```
+
+Facet bar plots were generated to examine the relationship between mental disorder prevalence and demographic information such as region and sex. The plots highlighted higher prevalence rates among females compared to males, and individuals in the Midwest region of the US exhibited the highest prevalence rates.
+
+```{r echo=FALSE, fig.height=5, fig.width=8}
+# facet by region and sex for prevalence rate
+p_demo <- clean_df |>
+  group_by(Region, Sex) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  ) |>
+  ggplot(aes(x = Region, y = Prevalence, fill = Region)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Sex) +
+  labs(title = "Mental Disorder Prevalence by Region and Sex", x = "Gender", y = "Prevalence") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(p_demo)
+```
+
+A map was generated to visualize geographic information and identify regional differences in mental disorder prevalence. The analysis revealed that the Midwest region had the highest prevalence, with higher rates observed in the central area compared to the two sides.
+
+```{r echo=FALSE, fig.height=5, fig.width=8}
+# Calculate Prevalence by Region
+region_prevalence <- clean_df |>
+  group_by(Region) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  )
+
+# Combine each state with its corresponding region name
+region_boundaries <- data.frame(State = state.abb) |>
+  mutate(Region = case_when(state.abb %in% c("WA", "OR", "CA", "ID", "NV", "MT", "WY", "UT", "AZ", "CO", "NM") ~ "West", 
+                            state.abb %in% c("ND", "SD", "NE", "KS", "MN", "IA", "MO", "WI", "IL", "MI", "IN", "OH") ~ "Midwest",
+                            state.abb %in% c("OK", "TX", "AR", "LA", "MS", "AL", "TN", "KY", "WV", "GA", "FL", "SC", "NC", "VA", "DC", "MD", "DE") ~ "South",
+                            state.abb %in% c("NY", "PA", "NJ", "CT", "MA", "RI", "VT", "NH", "ME") ~ "Northeast",
+                            TRUE ~ "Else"))
+
+# Merge state name and prevalence by region
+region_data <- merge(region_prevalence, region_boundaries, by = "Region", all.x = TRUE)
+
+# Set up mapping details
+set_map_details <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa')
+)
+
+# Make sure both maps are on the same color scale
+shadeLimit <- 125
+
+# Create hover text
+region_data$hover <- with(region_data, paste("Region: ", Region, '<br>', "State: ", State, '<br>', "Prevalence: ", Prevalence))
+
+# Create the map to show prevalence per Region
+map <- plot_geo(region_data, locationmode='USA-states') |>
+  add_trace(z = ~Prevalence, text = ~hover, locations = ~State, color = ~Prevalence) |>
+  layout(title = 'Prevalence by Region', geo=set_map_details)
+map
+```
+
+Facet bar plots were also used to explore the relationship between mental disorder prevalence and socioeconomic factors such as income and education level. Lower income levels were associated with higher prevalence rates, while differences in prevalence rates between different education levels were less pronounced. Surprisingly, individuals with professional school/doctoral degrees and associate degrees in the poverty group exhibited significantly higher prevalence rates.
+
+```{r, echo=FALSE, fig.align = 'center'}
+# facet by income and education level for prevalence rate
+p_soc <- clean_df |>
+  group_by(Income, Education) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  ) |>
+  ggplot(aes(x = Education, y = Prevalence, fill = Education)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Income) +
+  labs(title = "Mental Disorder Prevalence by Income and Education level", x = "Income level", y = "Prevalence") +
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+ggplotly(p_soc)
+```
+
+Lastly, facet bar plots were employed to investigate the relationship between mental disorder prevalence and other health outcomes such as BMI, Cancer, Chronic conditions, and Disability. Individuals with chronic conditions tended to have higher prevalence rates of mental disorders, while underweight and obese individuals were more likely to have mental disorders. Surprisingly, overweight individuals exhibited the lowest prevalence rates. Additionally, individuals with disabilities had significantly higher prevalence rates, while there was minimal difference in prevalence between individuals with a history of cancer and those without.
+
+```{r echo=FALSE, fig.height=4, fig.width=10}
+# facet by BMI and Chronic conditions for prevalence rate
+p_health1 <- clean_df |>
+  group_by(BMI, Chronic_cond) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  ) |>
+  ggplot(aes(x = BMI, y = Prevalence, fill = BMI)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Chronic_cond) +
+  labs(title = "Mental Disorder Prevalence by BMI and Chronic conditions", x = "Chronic conditions", y = "Prevalence") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+ggplotly(p_health1)
+
+
+# facet by Cancer and Disability for prevalence rate
+p_health2 <- clean_df |>
+  group_by(Disability, Cancer) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  ) |>
+  ggplot(aes(x = Cancer, y = Prevalence, fill = Cancer)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Disability) +
+  labs(title = "Mental Disorder Prevalence by Cancer and Disability", x = "Disability", y = "Prevalence") +
+  theme_minimal()
+
+ggplotly(p_health2)
+#plot_grid(p_health1, p_health2)
+```
+
+
+### Model
+
+After fitting a logistic regression model to examine the relationship between mental disorder prevalence and various factors, it was found that only BMI and Education variables were not statistically significant (p > 0.05). Therefore, these variables were removed from the model to ensure the statistical significance of all remaining predictors. Subsequently, all variables in the adjusted model were found to be statistically significant.
+
+However, the $R^2$ value of approximately 0.0992 indicated that the model could only explain 9.92% of the total variance in mental disorder prevalence. Consequently, the model may not be suitable for predictive purposes but can still be utilized for inference.
+
+Analysis of the model coefficients revealed several key insights. Positive coefficients for cancer, chronic conditions, and disability variables suggest that individuals with a history of these health conditions are more likely to experience mental disorders. Conversely, negative coefficients for region (Northeast, West, South), sex (male), and age variables indicate that individuals residing in the Midwest region, females, and younger age groups are more susceptible to mental disorders.
+
+Additionally, the positive coefficient for income suggests that higher-income groups are less likely to experience mental disorders, whereas the highest coefficient observed for the Poverty variable implies a greater likelihood of mental disorders among individuals living below the poverty threshold. These findings align with the patterns observed in the visualization analyses conducted previously.
+
+```{r echo=FALSE}
+clean_df[, Disorder := ifelse(Disorder == "Yes", 1, 0)] 
+
+glm <- glm(Disorder ~ ., family = binomial(link = logit), data = clean_df)
+kable(coef(summary(glm)), 
+      title = "Summary Statistics",
+      caption = "Summary of Full Logisitic Model",
+      align = "c")
+
+glm1 <- glm(Disorder ~ Region + Sex + Age + Income + Cancer + Chronic_cond + Disability, family = binomial(link = logit), data = clean_df)
+kable(coef(summary(glm1)), 
+      title = "Summary Statistics",
+      caption = "Summary of Logisitic Model without BMI and Education",
+      align = "c")
+
+R_square <- 1- (glm1$deviance / glm1$null.deviance)
+```
+
+## Conclusions and Summary
+
+This study aimed to explore the relationships between the prevalence of anxiety disorder and depression and various demographic, socioeconomic factors, and other health outcomes using the NHIS dataset from 2022. Through comprehensive data exploration and modeling techniques, several key findings emerged.
+
+- **Demographic Factors**: Female individuals and those in the Midwest region exhibited higher prevalence rates of mental disorders compared to their counterparts. Additionally, younger age groups were more susceptible to mental disorders.
+  
+- **Socioeconomic Factors**: Lower-income individuals, particularly those living below the poverty threshold, showed higher prevalence rates of mental disorders. While education level did not exhibit a significant relationship with mental disorder prevalence, higher-income levels were associated with lower prevalence rates.
+  
+- **Health Outcomes**: Individuals with chronic conditions, disabilities, or a history of cancer were more likely to experience mental disorders. Notably, underweight and obese individuals exhibited higher prevalence rates, while overweight individuals showed lower rates.
+
+The logistic regression model confirmed the statistical significance of these factors in predicting mental disorder prevalence. However, the model's relatively low $R^2$ value suggests that additional factors beyond those included in the model may contribute to mental disorder prevalence. Therefore, while the model may not be suitable for predictive purposes, the identified factors can inform public health interventions and policies aimed at addressing mental health disparities.
+
+In summary, the findings of this study have significant implications for public health policies and interventions aimed at addressing mental health disparities. Targeted efforts are needed to address socioeconomic inequalities, provide accessible mental health services, and promote overall well-being across diverse demographic groups and geographic regions. By understanding the determinants of mental health disorders, policymakers and healthcare providers can implement effective strategies to mitigate risks and improve mental health outcomes for all individuals.

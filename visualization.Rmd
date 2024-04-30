@@ -1,0 +1,286 @@
+---
+title: "Interactive Visualization"
+author: "Jing Yu"
+output: 
+    html_document:
+        toc: TRUE   # Table content at front of the page
+        toc_float: TRUE   # Floating table content on the left
+---
+
+```{r setup, message=FALSE, warning=FALSE, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, eval = T, include  = T, echo=F) 
+library(knitr)
+library(data.table)
+library(tidyverse)
+library(kableExtra)
+library(dplyr)
+library(splines)
+library(mgcv)
+library(ggstats)
+library(cowplot)
+library(plotly)
+```
+
+```{r checking-file, echo=FALSE}
+fn1 <- "https://raw.githubusercontent.com/angelaaajing/JSC370-Project/main/adult22.csv"
+
+if (!file.exists("adult22.csv"))
+  download.file(fn1, destfile = "adult22.csv")
+NHIS_df <- data.table::fread("adult22.csv")
+```
+
+```{r, echo=FALSE}
+NHIS_df <- NHIS_df[, c("REGION", "SEX_A", "AGEP_A", "MAXEDUCP_A", "RATCAT_A", 
+                       "BMICAT_A", "CANEV_A", "HYPEV_A", "CHLEV_A", "ARTHEV_A", 
+                       "DIBEV_A", "COPDEV_A", "VISIONDF_A", "HEARINGDF_A",
+                       "DIFF_A", "COMDIFF_A", "COGMEMDFF_A", "ANXEV_A", "DEPEV_A")]
+```
+
+```{r, echo=FALSE}
+clean_df <- NHIS_df |>
+  mutate(
+    Chronic_cond = case_when(
+      HYPEV_A == 1 | CHLEV_A == 1 | ARTHEV_A == 1 | DIBEV_A == 1 | COPDEV_A == 1 ~ "Yes", 
+      HYPEV_A == 2 & CHLEV_A == 2 & ARTHEV_A == 2 & DIBEV_A == 2 & COPDEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Disability = case_when(
+      VISIONDF_A == 2 | VISIONDF_A == 3 | VISIONDF_A == 4 | 
+        HEARINGDF_A == 2 | HEARINGDF_A == 3 | HEARINGDF_A == 4 |
+        DIFF_A == 2 | DIFF_A == 3 | DIFF_A == 4 |
+        COMDIFF_A == 2 | COMDIFF_A == 3 | COMDIFF_A == 4 |
+        COGMEMDFF_A == 2 | COGMEMDFF_A == 3 | COGMEMDFF_A == 4  ~ "Yes", 
+      VISIONDF_A == 1 & HEARINGDF_A == 1 & DIFF_A == 1 & 
+        COMDIFF_A == 1 & COGMEMDFF_A == 1 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Region = case_when(
+      REGION == 1 ~ "Northeast", 
+      REGION == 2 ~ "Midwest",
+      REGION == 3 ~ "South",
+      REGION == 4 ~ "West",
+      TRUE ~ NA_character_
+      ),
+    Sex = case_when(
+      SEX_A == 1 ~ "Male", 
+      SEX_A == 2 ~ "Female",
+      TRUE ~ NA_character_
+      ),
+    Education = case_when(
+      MAXEDUCP_A <= 04 ~ "High school or lower", 
+      MAXEDUCP_A == 05 ~ "Some college without degree",
+      MAXEDUCP_A == 06 | MAXEDUCP_A == 07 ~ "Associate degree",
+      MAXEDUCP_A == 08 ~ "Bachelor's degree",
+      MAXEDUCP_A == 09 ~ "Master's degree",
+      MAXEDUCP_A == 10 ~ "Professional School / Doctoral degree",
+      TRUE ~ NA_character_
+      ),
+    Income = case_when(
+      RATCAT_A <= 03 ~ "Poverty", 
+      RATCAT_A >= 04 & RATCAT_A <= 09 ~ "Low-Income",
+      RATCAT_A >= 10 & RATCAT_A <= 13 ~ "Middle-Income",
+      RATCAT_A == 14 ~ "High-Income",
+      TRUE ~ NA_character_
+      ),
+    BMI = case_when( 
+      BMICAT_A == 1 ~ "Underweight", 
+      BMICAT_A == 2 ~ "Healthy weight",
+      BMICAT_A == 3 ~ "Overweight",
+      BMICAT_A == 4 ~ "Obese",
+      TRUE ~ NA_character_
+      ),
+    Cancer = case_when(
+      CANEV_A == 1 ~ "Yes", 
+      CANEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Disorder = case_when(
+      ANXEV_A == 1 | DEPEV_A == 1 ~ "Yes", 
+      ANXEV_A == 2 & DEPEV_A == 2 ~ "No",
+      TRUE ~ NA_character_
+      ),
+    Age = ifelse(AGEP_A >= 97, NA_integer_, AGEP_A)
+  ) |>
+  select(Region, Sex, Age, Education, Income, BMI, Cancer, 
+         Chronic_cond, Disability, Disorder)
+```
+
+```{r, eval=FALSE, echo = FALSE, fig.align = 'center'}
+# Check percentage of missing values in each variable
+colMeans(is.na(clean_df)) * 100
+```
+
+```{r, echo = FALSE, fig.align = 'center'}
+# Remove rows with NA values
+clean_df <- na.omit(clean_df)
+```
+
+Below are some of the visualizations created with this project, which shows the prevalence rate by different factors.
+
+## Demographic Factors {.tabset}
+
+### Age
+
+A scatterplot was utilized to explore the relationship between age and mental disorder prevalence. The analysis revealed a decreasing trend in mental disorder prevalence with increasing age, indicating that younger individuals are more prone to mental disorders.
+
+```{r echo=FALSE}
+# relationship between age and mental disorder prevalence
+p_age <- clean_df |>
+  group_by(Age) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  ) |>
+  ggplot(aes(x = Age, y = Prevalence)) +
+  geom_point() +
+  labs(title = "Mental Disorder Prevalence by Age",
+       x = "Age",
+       y = "Prevalence") +
+  theme_minimal() +
+  stat_smooth(method = "lm", formula = y ~ x, se = FALSE, na.rm = TRUE)
+
+ggplotly(p_age)
+```
+
+### Region and Sex
+
+Facet bar plots were generated to examine the relationship between mental disorder prevalence and demographic information such as region and sex. The plots highlighted higher prevalence rates among females compared to males, and individuals in the Midwest region of the US exhibited the highest prevalence rates.
+
+```{r echo=FALSE}
+# facet by region and sex for prevalence rate
+p_demo <- clean_df |>
+  group_by(Region, Sex) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  ) |>
+  ggplot(aes(x = Region, y = Prevalence, fill = Region)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Sex) +
+  labs(title = "Mental Disorder Prevalence by Region and Sex", x = "Gender", y = "Prevalence") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(p_demo)
+```
+
+### Map
+A map was generated to visualize geographic information and identify regional differences in mental disorder prevalence. The analysis revealed that the Midwest region had the highest prevalence, with higher rates observed in the central area compared to the two sides.
+
+```{r echo=FALSE}
+# Calculate Prevalence by Region
+region_prevalence <- clean_df |>
+  group_by(Region) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  )
+
+# Combine each state with its corresponding region name
+region_boundaries <- data.frame(State = state.abb) |>
+  mutate(Region = case_when(state.abb %in% c("WA", "OR", "CA", "ID", "NV", "MT", "WY", "UT", "AZ", "CO", "NM") ~ "West", 
+                            state.abb %in% c("ND", "SD", "NE", "KS", "MN", "IA", "MO", "WI", "IL", "MI", "IN", "OH") ~ "Midwest",
+                            state.abb %in% c("OK", "TX", "AR", "LA", "MS", "AL", "TN", "KY", "WV", "GA", "FL", "SC", "NC", "VA", "DC", "MD", "DE") ~ "South",
+                            state.abb %in% c("NY", "PA", "NJ", "CT", "MA", "RI", "VT", "NH", "ME") ~ "Northeast",
+                            TRUE ~ "Else"))
+
+# Merge state name and prevalence by region
+region_data <- merge(region_prevalence, region_boundaries, by = "Region", all.x = TRUE)
+
+# Set up mapping details
+set_map_details <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa')
+)
+
+# Make sure both maps are on the same color scale
+shadeLimit <- 125
+
+# Create hover text
+region_data$hover <- with(region_data, paste("Region: ", Region, '<br>', "State: ", State, '<br>', "Prevalence: ", Prevalence))
+
+# Create the map to show prevalence per Region
+map <- plot_geo(region_data, locationmode='USA-states') |>
+  add_trace(z = ~Prevalence, text = ~hover, locations = ~State, color = ~Prevalence) |>
+  layout(title = 'Prevalence by Region', geo=set_map_details)
+map
+```
+
+
+## Socioeconomic Factors {.tabset}
+
+
+Facet bar plots were also used to explore the relationship between mental disorder prevalence and socioeconomic factors such as income and education level. Lower income levels were associated with higher prevalence rates, while differences in prevalence rates between different education levels were less pronounced. Surprisingly, individuals with professional school/doctoral degrees and associate degrees in the poverty group exhibited significantly higher prevalence rates.
+
+
+### Income and Education Level
+
+```{r, echo=FALSE}
+# facet by income and education level for prevalence rate
+p_soc <- clean_df |>
+  group_by(Income, Education) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  ) |>
+  ggplot(aes(x = Education, y = Prevalence, fill = Education)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Income) +
+  labs(title = "Mental Disorder Prevalence by Income and Education level", x = "Income level", y = "Prevalence") +
+  theme_minimal() + 
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+ggplotly(p_soc)
+```
+
+## Other Health Outcomes {.tabset}
+
+Lastly, facet bar plots were employed to investigate the relationship between mental disorder prevalence and other health outcomes such as BMI, Cancer, Chronic conditions, and Disability. Individuals with chronic conditions tended to have higher prevalence rates of mental disorders, while underweight and obese individuals were more likely to have mental disorders. Surprisingly, overweight individuals exhibited the lowest prevalence rates. Additionally, individuals with disabilities had significantly higher prevalence rates, while there was minimal difference in prevalence between individuals with a history of cancer and those without.
+
+### BMI and Chronic conditions
+
+```{r echo=FALSE}
+# facet by BMI and Chronic conditions for prevalence rate
+p_health1 <- clean_df |>
+  group_by(BMI, Chronic_cond) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  ) |>
+  ggplot(aes(x = BMI, y = Prevalence, fill = BMI)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Chronic_cond) +
+  labs(title = "Mental Disorder Prevalence by BMI and Chronic conditions", x = "Chronic conditions", y = "Prevalence") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+ggplotly(p_health1)
+```
+
+
+### Cancer and Disability
+
+```{r echo=FALSE}
+# facet by Cancer and Disability for prevalence rate
+p_health2 <- clean_df |>
+  group_by(Disability, Cancer) |>
+  summarize(
+    Count = n(),
+    Prevalence = mean(Disorder == "Yes", na.rm = TRUE)
+  ) |>
+  ggplot(aes(x = Cancer, y = Prevalence, fill = Cancer)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Disability) +
+  labs(title = "Mental Disorder Prevalence by Cancer and Disability", x = "Disability", y = "Prevalence") +
+  theme_minimal()
+
+ggplotly(p_health2)
+```
+
+{-}
