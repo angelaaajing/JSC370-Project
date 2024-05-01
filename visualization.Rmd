@@ -22,7 +22,7 @@ library(plotly)
 ```
 
 ```{r checking-file, echo=FALSE}
-fn1 <- "https://raw.githubusercontent.com/angelaaajing/JSC370-Project/main/adult22.csv"
+fn1 <- "https://raw.githubusercontent.com/angelaaajing/JSC370-Project/main/data/adult22.csv"
 
 if (!file.exists("adult22.csv"))
   download.file(fn1, destfile = "adult22.csv")

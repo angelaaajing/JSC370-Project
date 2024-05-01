@@ -1,10 +1,10 @@
 ---
-title: "Explore the Relationship between Prevalence of Mental Disorder and Various Factors (Demographic, Socioeconomic, and Other Health Outcomes)"
+title: "Exploring the Prevalence of Mental Disorder by Various Factors: Demographic, Socioeconomic, and Other Health Outcomes"
 subtitle: "JSC370 Final Project"
 author: "Jing Yu"
 date: "April 2024"
 output:
-  html_document: 
+  pdf_document: 
     fig_caption: true
     fig_height: 6
     fig_width: 10
@@ -25,8 +25,9 @@ library(plotly)
 
 ## Introduction
 
-The National Health Interview Survey (NHIS) is a vital source of information on the health of the civilian noninstitutionalized population of the United States. It is conducted by the National Center for Health Statistics (NCHS), which is part of the Centers for Disease Control and Prevention (CDC). With its comprehensive coverage of demographic, socioeconomic, and health-related factors, it provides an excellent platform for investigating the correlates of prevalent mental health disorders among adults, such as anxiety and depression. This study aims to **Explore the Relationship between Prevalence of Mental Disorder and Various Factors (Demographic, Socioeconomic, and Other Health Outcomes)**. Understanding these correlations can provide valuable insights into the determinants of mental health and inform public health policies and interventions.
+The National Health Interview Survey (NHIS) stands as a cornerstone in understanding the health landscape of the United States' civilian noninstitutionalized population. Administered by the National Center for Health Statistics (NCHS), a branch of the Centers for Disease Control and Prevention (CDC), the NHIS offers a comprehensive dataset encompassing demographic, socioeconomic, and health-related variables. This rich repository of information presents an unparalleled opportunity to delve into the complex interplay between various factors and the prevalence of mental health disorders among adults, including anxiety and depression.
 
+Against this backdrop, our study aims to **Explore the Prevalence of Mental Disorder by Various Factors: Demographic, Socioeconomic, and Other Health Outcomes**. By scrutinizing these correlations, we aspire to unearth valuable insights into the determinants of mental health, shedding light on pivotal factors that contribute to the prevalence of mental disorders within the adult population. Ultimately, the findings gleaned from this investigation hold the potential to catalyze evidence-based policymaking and targeted interventions, paving the way for improved mental health outcomes and enhanced public health initiatives.
 
 ## Methods
 
@@ -38,7 +39,7 @@ Upon downloading the dataset from the website, it was uploaded to a GitHub repos
 
 
 ```{r checking-file, echo=FALSE}
-fn1 <- "https://raw.githubusercontent.com/angelaaajing/JSC370-Project/main/adult22.csv"
+fn1 <- "https://raw.githubusercontent.com/angelaaajing/JSC370-Project/main/data/adult22.csv"
 
 if (!file.exists("adult22.csv"))
   download.file(fn1, destfile = "adult22.csv")
@@ -524,7 +525,7 @@ p_health1 <- clean_df |>
     axis.ticks.x = element_blank()
   )
 
-ggplotly(p_health1)
+# ggplotly(p_health1)
 
 
 # facet by Cancer and Disability for prevalence rate
@@ -540,8 +541,8 @@ p_health2 <- clean_df |>
   labs(title = "Mental Disorder Prevalence by Cancer and Disability", x = "Disability", y = "Prevalence") +
   theme_minimal()
 
-ggplotly(p_health2)
-#plot_grid(p_health1, p_health2)
+# ggplotly(p_health2)
+plot_grid(p_health1, p_health2)
 ```
 
 

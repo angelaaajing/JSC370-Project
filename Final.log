@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.4.30)  30 APR 2024 17:26
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.4.30)  30 APR 2024 21:10
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -455,7 +455,7 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 28
 File: bkm-pdftex.def 2023-12-10 v1.31 bookmark driver for pdfTeX and luaTeX (HO)
 \BKM@id=\count314
 ))
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 106.
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 105.
 (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/lm/t1lmr.fd
 File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
@@ -472,24 +472,24 @@ LaTeX Warning: Label `tab:unnamed-chunk-6' multiply defined.
 )
 \openout1 = `Final.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 106.
-LaTeX Font Info:    ... okay on input line 106.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 106.
-LaTeX Font Info:    ... okay on input line 106.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 106.
-LaTeX Font Info:    ... okay on input line 106.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 106.
-LaTeX Font Info:    ... okay on input line 106.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 106.
-LaTeX Font Info:    ... okay on input line 106.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 106.
-LaTeX Font Info:    ... okay on input line 106.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 106.
-LaTeX Font Info:    ... okay on input line 106.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 106.
-LaTeX Font Info:    ... okay on input line 106.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 106.
-LaTeX Font Info:    ... okay on input line 106.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 105.
+LaTeX Font Info:    ... okay on input line 105.
 (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
@@ -530,61 +530,61 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-Package hyperref Info: Link coloring OFF on input line 106.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 108.
+Package hyperref Info: Link coloring OFF on input line 105.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 107.
 (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 108.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 107.
 (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 108.
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 107.
 (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 108.
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 107.
 (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 108.
+(Font)              <12> on input line 107.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 108.
+(Font)              <8> on input line 107.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 108.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 108.
+(Font)              <6> on input line 107.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 107.
 (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 108.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 107.
 (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 135.
+(Font)              <10> on input line 142.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 135.
+(Font)              <7> on input line 142.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 135.
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 145.
+(Font)              <5> on input line 142.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 152.
 (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 155.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 162.
 (/Users/apple/Library/TinyTeX/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [1
 
 {/Users/apple/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/apple/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/Users/apple/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}] [2]
-Overfull \hbox (52.0811pt too wide) in alignment at lines 298--313
+Overfull \hbox (52.0811pt too wide) in alignment at lines 305--320
  [] [] [] [] [] [] [] [] [] 
  []
 
 <Final_files/figure-latex/unnamed-chunk-7-1.pdf, id=34, 722.7pt x 578.16pt>
 File: Final_files/figure-latex/unnamed-chunk-7-1.pdf Graphic file (type pdf)
 <use Final_files/figure-latex/unnamed-chunk-7-1.pdf>
-Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-7-1.pdf  used on input line 396.
+Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-7-1.pdf  used on input line 403.
 (pdftex.def)             Requested size: 469.76045pt x 375.80836pt.
 [3]
 Overfull \vbox (28.57124pt too high) has occurred while \output is active []
@@ -593,29 +593,29 @@ Overfull \vbox (28.57124pt too high) has occurred while \output is active []
 <Final_files/figure-latex/unnamed-chunk-8-1.pdf, id=64, 361.35pt x 216.81pt>
 File: Final_files/figure-latex/unnamed-chunk-8-1.pdf Graphic file (type pdf)
 <use Final_files/figure-latex/unnamed-chunk-8-1.pdf>
-Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-8-1.pdf  used on input line 406.
+Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-8-1.pdf  used on input line 413.
 (pdftex.def)             Requested size: 361.34912pt x 216.80946pt.
 <Final_files/figure-latex/unnamed-chunk-9-1.pdf, id=65, 578.16pt x 361.35pt>
 File: Final_files/figure-latex/unnamed-chunk-9-1.pdf Graphic file (type pdf)
 <use Final_files/figure-latex/unnamed-chunk-9-1.pdf>
-Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-9-1.pdf  used on input line 414.
+Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-9-1.pdf  used on input line 421.
 (pdftex.def)             Requested size: 469.75385pt x 293.59616pt.
 [5 <./Final_files/figure-latex/unnamed-chunk-8-1.pdf> <./Final_files/figure-latex/unnamed-chunk-9-1.pdf>]
 <Final_files/figure-latex/unnamed-chunk-10-1.pdf, id=91, 578.16pt x 361.35pt>
 File: Final_files/figure-latex/unnamed-chunk-10-1.pdf Graphic file (type pdf)
 <use Final_files/figure-latex/unnamed-chunk-10-1.pdf>
-Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-10-1.pdf  used on input line 421.
+Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-10-1.pdf  used on input line 428.
 (pdftex.def)             Requested size: 469.75385pt x 293.59616pt.
 <Final_files/figure-latex/unnamed-chunk-11-1.pdf, id=92, 722.7pt x 433.62pt>
 File: Final_files/figure-latex/unnamed-chunk-11-1.pdf Graphic file (type pdf)
 <use Final_files/figure-latex/unnamed-chunk-11-1.pdf>
-Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-11-1.pdf  used on input line 432.
+Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-11-1.pdf  used on input line 439.
 (pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
 [6 <./Final_files/figure-latex/unnamed-chunk-10-1.pdf>]
 <Final_files/figure-latex/unnamed-chunk-12-1.pdf, id=136, 722.7pt x 289.08pt>
 File: Final_files/figure-latex/unnamed-chunk-12-1.pdf Graphic file (type pdf)
 <use Final_files/figure-latex/unnamed-chunk-12-1.pdf>
-Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-12-1.pdf  used on input line 445.
+Package pdftex.def Info: Final_files/figure-latex/unnamed-chunk-12-1.pdf  used on input line 452.
 (pdftex.def)             Requested size: 469.76045pt x 187.90417pt.
 [7 <./Final_files/figure-latex/unnamed-chunk-11-1.pdf> <./Final_files/figure-latex/unnamed-chunk-12-1.pdf>] [8{/Users/apple/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/Users/apple/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}] [9] (./Final.aux)
  ***********
@@ -635,7 +635,7 @@ Here is how much of TeX's memory you used:
  14 hyphenation exceptions out of 8191
  89i,9n,93p,409b,555s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/apple/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/apple/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/apple/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/apple/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/apple/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/apple/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/apple/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/apple/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on Final.pdf (9 pages, 298201 bytes).
+Output written on Final.pdf (9 pages, 264412 bytes).
 PDF statistics:
  264 PDF objects out of 1000 (max. 8388607)
  217 compressed objects within 3 object streams
