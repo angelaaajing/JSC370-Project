@@ -1,4 +1,4 @@
-# Explore the Relationship between Prevalence of Mental Disorder and Various Factors (Demographic, Socioeconomic, and Other Health Outcomes)
+# Exploring the Prevalence of Mental Disorder by Various Factors: Demographic, Socioeconomic, and Other Health Outcomes
 
 The project site is live at: <https://angelaaajing.github.io/JSC370-Project/>
 
