@@ -1,0 +1,20 @@
+name: "mental_health_prevalence"
+output_dir: "."
+navbar:
+  title: "JSC370 Final Project"
+  left:
+    - text: "Description"
+      href: index.html
+    - text: "Visualizations"
+      href: visualization.html
+    - text: "Report"
+      href: Final.pdf
+  right:
+    - icon: fa-github fa-lg
+      href: https://github.com/angelaaajing/JSC370-Project
+    - text: "JSC370 Home"
+      href: https://jsc370.github.io/JSC370-2024/
+output:
+  html_document:
+    theme: cosmo
+    css: styles.css
